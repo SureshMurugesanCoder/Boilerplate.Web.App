@@ -13,39 +13,43 @@ namespace Boilerplate.Web.App.Controllers
 
     public class ProdController : Controller
     {
+        private readonly OnboardingContext _context;
+
+        public ProdController(OnboardingContext context)
+        {
+            _context = context;
+        }
+
         [HttpGet("[action]")]
         public List<Product> ProductDisplay()
         {
-            using (var db = new OnboardingContext())
-            {
-                var model = db.Product.ToList();
-                return model;
-            }
+
+            var model = _context.Product.ToList();
+            return model;
         }
 
         [HttpPost("[action]")]
         public IActionResult AddProduct([FromBody]Product prod)
         {
 
-            using (var db = new OnboardingContext())
+
+            var model = _context.Product.Where(x => x.Id.Equals(prod.Id)).FirstOrDefault();
+            if (model == null)
             {
-                var model = db.Product.Where(x => x.Id.Equals(prod.Id)).FirstOrDefault();
-                if (model == null)
+                model = new Product
                 {
-                    model = new Product
-                    {
-                        Id = prod.Id,
-                    };
+                    Id = prod.Id,
+                };
 
-                    db.Entry(model).State = EntityState.Added;
-                    db.Product.Add(model);
-                }
-                model.Name = prod.Name;
-                model.Price = prod.Price;
-
-                db.SaveChanges();
-
+                _context.Entry(model).State = EntityState.Added;
+                _context.Product.Add(model);
             }
+            model.Name = prod.Name;
+            model.Price = prod.Price;
+
+            _context.SaveChanges();
+
+
 
             return Ok(prod);
         }
@@ -53,16 +57,15 @@ namespace Boilerplate.Web.App.Controllers
         [HttpPost("[action]")]
         public IActionResult DeleteProduct([FromBody]Product prod)
         {
-            using (var db = new OnboardingContext())
+
+            var model = _context.Product.Where(x => x.Id.Equals(prod.Id)).FirstOrDefault();
+            if (model != null)
             {
-                var model = db.Product.Where(x => x.Id.Equals(prod.Id)).FirstOrDefault();
-                if (model != null)
-                {
-                    db.Entry(model).State = EntityState.Deleted;
-                    db.Product.Remove(model);
-                    db.SaveChanges();
-                }
+                _context.Entry(model).State = EntityState.Deleted;
+                _context.Product.Remove(model);
+                _context.SaveChanges();
             }
+
             return Ok(prod);
         }
     }

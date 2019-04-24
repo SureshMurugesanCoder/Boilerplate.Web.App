@@ -13,39 +13,44 @@ namespace Boilerplate.Web.App.Controllers
 
     public class StoreController : Controller
     {
+        private readonly OnboardingContext _context;
+
+        public StoreController(OnboardingContext context)
+        {
+            _context = context;
+        }
+
         [HttpGet("[action]")]
         public List<Store> StoreDisplay()
         {
-            using (var db = new OnboardingContext())
-            {
-                var model = db.Store.ToList();
-                return model;
-            }
+
+            var model = _context.Store.ToList();
+            return model;
+
         }
 
         [HttpPost("[action]")]
         public IActionResult AddStore([FromBody]Store store)
         {
 
-            using (var db = new OnboardingContext())
+
+            var model = _context.Store.Where(x => x.Id.Equals(store.Id)).FirstOrDefault();
+            if (model == null)
             {
-                var model = db.Store.Where(x => x.Id.Equals(store.Id)).FirstOrDefault();
-                if (model == null)
+                model = new Store
                 {
-                    model = new Store
-                    {
-                        Id = store.Id,
-                    };
+                    Id = store.Id,
+                };
 
-                    db.Entry(model).State = EntityState.Added;
-                    db.Store.Add(model);
-                }
-                model.Name = store.Name;
-                model.Address = store.Address;
-
-                db.SaveChanges();
-
+                _context.Entry(model).State = EntityState.Added;
+                _context.Store.Add(model);
             }
+            model.Name = store.Name;
+            model.Address = store.Address;
+
+            _context.SaveChanges();
+
+
 
             return Ok(store);
         }
@@ -53,16 +58,15 @@ namespace Boilerplate.Web.App.Controllers
         [HttpPost("[action]")]
         public IActionResult DeleteStore([FromBody]Store store)
         {
-            using (var db = new OnboardingContext())
+
+            var model = _context.Store.Where(x => x.Id.Equals(store.Id)).FirstOrDefault();
+            if (model != null)
             {
-                var model = db.Store.Where(x => x.Id.Equals(store.Id)).FirstOrDefault();
-                if (model != null)
-                {
-                    db.Entry(model).State = EntityState.Deleted;
-                    db.Store.Remove(model);
-                    db.SaveChanges();
-                }
+                _context.Entry(model).State = EntityState.Deleted;
+                _context.Store.Remove(model);
+                _context.SaveChanges();
             }
+
             return Ok(store);
         }
     }

@@ -9,60 +9,60 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Boilerplate.Web.App.Controllers
 {
+
     [Route("api/[controller]")]
 
     public class CustController : Controller
     {
+        private readonly OnboardingContext _context;
+
+        public CustController(OnboardingContext context)
+        {
+            _context = context;
+        }
+
         [HttpGet("[action]")]
         public List<Customer> CustomerDisplay()
         {
-            using (var db = new OnboardingContext())
-            {
-                var model = db.Customer.ToList();
-                return model;
-            }
+
+            var model = _context.Customer.ToList();
+            return model;
+
         }
 
         [HttpPost("[action]")]
         public IActionResult AddCustomer([FromBody]Customer cust)
         {
-
-            using (var db = new OnboardingContext())
+            var model = _context.Customer.Where(x => x.Id.Equals(cust.Id)).FirstOrDefault();
+            if (model == null)
             {
-                var model = db.Customer.Where(x => x.Id.Equals(cust.Id)).FirstOrDefault();
-                if (model == null)
+                model = new Customer
                 {
-                    model = new Customer
-                    {
-                        Id = cust.Id,
-                    };
+                    Id = cust.Id,
+                };
 
-                    db.Entry(model).State = EntityState.Added;
-                    db.Customer.Add(model);
-                }
-                model.Name = cust.Name;
-                model.Address = cust.Address;
-
-                db.SaveChanges();
-
+                _context.Entry(model).State = EntityState.Added;
+                _context.Customer.Add(model);
             }
+            model.Name = cust.Name;
+            model.Address = cust.Address;
 
+            _context.SaveChanges();
             return Ok(cust);
         }
 
         [HttpPost("[action]")]
         public IActionResult DeleteCustomer([FromBody]Customer cust)
         {
-            using (var db = new OnboardingContext())
+
+            var model = _context.Customer.Where(x => x.Id.Equals(cust.Id)).FirstOrDefault();
+            if (model != null)
             {
-                var model = db.Customer.Where(x => x.Id.Equals(cust.Id)).FirstOrDefault();
-                if (model != null)
-                {
-                    db.Entry(model).State = EntityState.Deleted;
-                    db.Customer.Remove(model);
-                    db.SaveChanges();
-                }
+                _context.Entry(model).State = EntityState.Deleted;
+                _context.Customer.Remove(model);
+                _context.SaveChanges();
             }
+
             return Ok(cust);
         }
     }
